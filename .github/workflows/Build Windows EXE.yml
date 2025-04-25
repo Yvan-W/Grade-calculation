@@ -1,6 +1,7 @@
 name: Build Windows EXE
 
-on: [push]
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,7 +18,7 @@ jobs:
       - name: Build EXE
         run: pyinstaller --onefile --windowed score_summary_gui.py
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: score_summary_gui
           path: dist/score_summary_gui.exe
