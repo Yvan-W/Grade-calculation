@@ -14,10 +14,9 @@ jobs:
           python-version: '3.12'
       - name: Install requirements
         run: |
-          pip install pandas openpyxl PySimpleGUI==4.55.1 pyinstaller
-          pip list  # 确保库已安装
+          pip install pandas openpyxl PySimpleGUI pyinstaller
       - name: Build EXE
-        run: python -m PyInstaller --onefile --windowed --hidden-import=PySimpleGUI score_summary_gui.py
+        run: pyinstaller --onefile --windowed score_summary_gui.py
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
