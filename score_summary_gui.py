@@ -25,12 +25,13 @@ default_params = {
 }
 
 layout = [
-    [sg.Text('输入文件（每科 sheet）'), sg.Input(key='-IN-'), sg.FileBrowse(file_types=(('Excel','*.xlsx'),))],
-    [sg.Text('输出文件'), sg.Input(key='-OUT-'), sg.FileSaveAs(defaultextension='.xlsx', file_types=(('Excel','*.xlsx'),))],
-    [sg.Text('阈值参数 (JSON)'), sg.Multiline(json.dumps(default_params, ensure_ascii=False, indent=2), size=(60,15), key='-PARAM-')],
+    [sg.Label('输入文件（每科 sheet）'), sg.Input(key='-IN-'), sg.FileBrowse(file_types=(('Excel','*.xlsx'),))],
+    [sg.Label('输出文件'), sg.Input(key='-OUT-'), sg.FileSaveAs(defaultextension='.xlsx', file_types=(('Excel','*.xlsx'),))],
+    [sg.Label('阈值参数 (JSON)'), sg.Multiline(json.dumps(default_params, ensure_ascii=False, indent=2), size=(60,15), key='-PARAM-')],
     [sg.Button('运行'), sg.Button('退出')],
     [sg.StatusBar('', size=(60,1), key='-STATUS-')]
 ]
+
 
 window = sg.Window('成绩汇总工具', layout)
 
