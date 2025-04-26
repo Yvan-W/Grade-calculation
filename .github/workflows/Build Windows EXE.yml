@@ -17,7 +17,7 @@ jobs:
           pip install pandas openpyxl PySimpleGUI==4.55.1 pyinstaller
           pip list  # 确保库已安装
       - name: Build EXE
-        run: pyinstaller --onefile --windowed --hidden-import=PySimpleGUI score_summary_gui.py
+        run: python -m PyInstaller --onefile --windowed --hidden-import=PySimpleGUI score_summary_gui.py
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
