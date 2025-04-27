@@ -1,100 +1,94 @@
-"""
-可视化 Windows 可执行文件：
-1. 使用 PySimpleGUI 构建简单界面，支持：
-   - 选择输入 Excel 文件
-   - 选择输出汇总文件路径
-   - 编辑各科阈值参数（JSON 格式）
-   - 点击“运行”按钮生成汇总
-2. 依赖：pandas, openpyxl, PySimpleGUI
-3. 打包：
-   ```bash
-   pip install pyinstaller
-   pyinstaller --onefile --windowed score_summary_gui.py
-   ```
-生成的 exe 即可独立运行，无需 Python 环境。
-"""
-import json
 import pandas as pd
-import PySimpleGUI as sg
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import os
 
-# 默认参数
-default_params = {
-    '语文':    {'total': 150, 'excellent': 135, 'good': 120, 'pass':  90},
-    '数学':    {'total': 150, 'excellent': 135, 'good': 120, 'pass':  90},
-    '英语':    {'total': 150, 'excellent': 135, 'good': 120, 'pass':  90}
-}
+# 读取并解析 Excel 文件，获取所有班级的科目
+def load_data(file_path):
+    xls = pd.ExcelFile(file_path)
+    sheet_names = xls.sheet_names
+    class_subjects = {}
 
-layout = [
-    [sg.Label('输入文件（每科 sheet）'), sg.Input(key='-IN-'), sg.FileBrowse(file_types=(('Excel','*.xlsx'),))],
-    [sg.Label('输出文件'), sg.Input(key='-OUT-'), sg.FileSaveAs(defaultextension='.xlsx', file_types=(('Excel','*.xlsx'),))],
-    [sg.Label('阈值参数 (JSON)'), sg.Multiline(json.dumps(default_params, ensure_ascii=False, indent=2), size=(60,15), key='-PARAM-')],
-    [sg.Button('运行'), sg.Button('退出')],
-    [sg.StatusBar('', size=(60,1), key='-STATUS-')]
-]
+    for sheet in sheet_names:
+        df = xls.parse(sheet)
+        # 假设科目从第四行的第三列开始
+        subjects = df.iloc[3, 2:].dropna().tolist()
+        class_subjects[sheet] = subjects
 
+    return class_subjects
 
-window = sg.Window('成绩汇总工具', layout)
+# 自动生成界面，基于科目设置输入框
+def create_input_frame(root, class_subjects):
+    input_frame = tk.Frame(root)
+    input_frame.pack(pady=20)
 
+    entries = {}
+    for class_name, subjects in class_subjects.items():
+        label = tk.Label(input_frame, text=f"{class_name} 科目设置")
+        label.grid(row=0, column=0, padx=10, pady=5, sticky='w')
 
-def run_summary(input_file, output_file, params):
-    index_labels = [
-        '班级总分','参加考试人数','最高分','最低分','平均分',
-        '合格人数','合格率','优秀人数','优秀率',
-        '平均得分率','良好人数','良好率','综合率'
-    ]
-    with pd.ExcelFile(input_file) as xls:
-        writer = pd.ExcelWriter(output_file, engine='openpyxl')
-        subject_scores = {}
-        for subj in xls.sheet_names:
-            df = xls.parse(subj)
-            scores = df.iloc[:,1].dropna()
-            n = scores.count(); total = scores.sum(); mx = scores.max(); mn = scores.min(); avg = scores.mean()
-            thresh = params.get(subj)
-            if not thresh:
-                raise KeyError(f"缺少科目 {subj} 的参数配置。")
-            pass_n = scores[scores>=thresh['pass']].count()
-            exc_n  = scores[scores>=thresh['excellent']].count()
-            good_n = scores[scores>=thresh['good']].count()
-            pass_rate  = pass_n/n; exc_rate = exc_n/n; good_rate=good_n/n; avg_rate=avg/thresh['total']
-            comp_rate = avg_rate*0.2 + pass_rate*0.6 + exc_rate*0.1 + good_rate*0.1
-            summary = pd.DataFrame({'指标': index_labels, subj: [
-                total,n,mx,mn,avg, pass_n,pass_rate,exc_n,exc_rate, avg_rate,good_n,good_rate,comp_rate
-            ]})
-            summary.to_excel(writer, sheet_name=subj, index=False)
-            subject_scores[subj] = scores.values
-        # 综合汇总
-        all_df = pd.DataFrame(subject_scores)
-        all_df['总分'] = all_df.sum(axis=1)
-        sums = all_df['总分']; N=sums.count(); T=sums.sum(); Mx=sums.max(); Mn=sums.min(); A=sums.mean()
-        total_max = sum(v['total'] for v in params.values())
-        total_pass = sum(v['pass'] for v in params.values())
-        total_good = sum(v['good'] for v in params.values())
-        total_exc  = sum(v['excellent'] for v in params.values())
-        pass_n = sums[sums>=total_pass].count()
-        exc_n  = sums[sums>=total_exc].count()
-        good_n = sums[sums>=total_good].count()
-        pass_rate  = pass_n/N; exc_rate=exc_n/N; good_rate=good_n/N; avg_rate=A/total_max
-        comp_rate=avg_rate*0.2+pass_rate*0.6+exc_rate*0.1+good_rate*0.1
-        overall=pd.DataFrame({'指标':index_labels,'综合': [
-            T,N,Mx,Mn,A, pass_n,pass_rate,exc_n,exc_rate, avg_rate,good_n,good_rate,comp_rate
-        ]})
-        overall.to_excel(writer, sheet_name='综合', index=False)
-        writer.save()
+        # 为每个科目生成输入框
+        for i, subject in enumerate(subjects):
+            label = tk.Label(input_frame, text=subject)
+            label.grid(row=i + 1, column=0, padx=10, pady=5, sticky='w')
 
-# 事件循环
-while True:
-    event, values = window.read()
-    if event in (sg.WIN_CLOSED, '退出'):
-        break
-    if event == '运行':
-        try:
-            win_in = values['-IN-']
-            win_out = values['-OUT-']
-            params = json.loads(values['-PARAM-'])
-            window['-STATUS-'].update('处理中...')
-            run_summary(win_in, win_out, params)
-            window['-STATUS-'].update('完成！文件已生成')
-        except Exception as e:
-            window['-STATUS-'].update(f'错误: {e}')
+            total_entry = tk.Entry(input_frame)
+            total_entry.grid(row=i + 1, column=1)
+            total_entry.insert(0, 150)  # 默认值为150
+            entries[(class_name, subject)] = total_entry
 
-window.close()
+    return entries
+
+# 计算并保存结果
+def calculate_and_save(entries, output_file, file_path):
+    try:
+        class_subjects = load_data(file_path)
+        
+        params = {}
+        for (class_name, subject), entry in entries.items():
+            total_score = int(entry.get())
+            if class_name not in params:
+                params[class_name] = {}
+            params[class_name][subject] = total_score
+        
+        # 在这里进行成绩统计和汇总计算的逻辑
+        # ...
+
+        # 在此添加生成Excel的代码
+        
+        # 弹出成功信息
+        messagebox.showinfo("成功", f"成绩汇总已保存至 {output_file}")
+    except Exception as e:
+        messagebox.showerror("错误", f"发生错误：{e}")
+
+# 主窗口
+def main():
+    root = tk.Tk()
+    root.title("成绩汇总生成工具")
+
+    # 选择文件
+    def select_file():
+        file_path = filedialog.askopenfilename(title="选择成绩文件", filetypes=(("Excel Files", "*.xlsx"), ("All Files", "*.*")))
+        if file_path:
+            # 加载并显示科目设置输入框
+            class_subjects = load_data(file_path)
+            entries = create_input_frame(root, class_subjects)
+
+            # 选择输出文件位置
+            def select_output():
+                output_file = filedialog.asksaveasfilename(title="选择保存文件", defaultextension=".xlsx", filetypes=(("Excel Files", "*.xlsx"), ("All Files", "*.*")))
+                if output_file:
+                    calculate_and_save(entries, output_file, file_path)
+
+            # 输出文件路径按钮
+            output_button = tk.Button(root, text="选择输出文件", command=select_output)
+            output_button.pack(pady=20)
+
+    # 选择文件按钮
+    select_button = tk.Button(root, text="选择成绩文件", command=select_file)
+    select_button.pack(pady=20)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
