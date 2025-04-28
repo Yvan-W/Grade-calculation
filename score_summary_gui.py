@@ -56,7 +56,8 @@ class GradeCalculatorApp(tk.Tk):
     def calculate_grades(self, file_path):
         # 读取Excel文件
         try:
-            df = pd.read_excel(file_path, engine='openpyxl')
+            # 跳过前两行
+            df = pd.read_excel(file_path, engine='openpyxl', skiprows=2)
         except Exception as e:
             messagebox.showerror("错误", f"读取Excel文件失败: {str(e)}")
             return
@@ -241,14 +242,16 @@ class GradeCalculatorApp(tk.Tk):
             try:
                 # 创建Excel工作簿
                 wb = Workbook()
-                ws = wb.active
-                ws.title = "成绩统计表"
+                
+                # 创建第一个工作表（原始结构）
+                ws1 = wb.active
+                ws1.title = "成绩统计表"
                 
                 # 写入表头
                 headers = ["学科", "班级总分", "参加考试人数", "最高分", "最低分", "平均分", 
                           "合格人数", "合格率", "优秀人数", "优秀率", "平均得分率", 
                           "良好人数", "良好率", "综合率"]
-                ws.append(headers)
+                ws1.append(headers)
                 
                 # 写入数据
                 for _, row in self.result_df.iterrows():
@@ -268,7 +271,25 @@ class GradeCalculatorApp(tk.Tk):
                         f"{row['良好率']*100:.2f}%",
                         f"{row['综合率']*100:.2f}%"
                     ]
-                    ws.append(data_row)
+                    ws1.append(data_row)
+                
+                # 创建第二个工作表（转置结构）
+                ws2 = wb.create_sheet("成绩统计表转置")
+                
+                # 转置数据
+                transposed_df = self.result_df.set_index("学科").transpose()
+                transposed_df.reset_index(inplace=True)
+                
+                # 写入转置表头
+                transposed_headers = ["分值/学科"] + transposed_df["index"].tolist()
+                ws2.append(transposed_headers)
+                
+                # 写入转置数据
+                for i in range(len(transposed_df.columns[1:])):
+                    data_row = [transposed_df.columns[i+1]]
+                    for j in range(len(transposed_df)):
+                        data_row.append(transposed_df.iloc[j, i+1])
+                    ws2.append(data_row)
                 
                 # 保存文件
                 wb.save(file_path)
