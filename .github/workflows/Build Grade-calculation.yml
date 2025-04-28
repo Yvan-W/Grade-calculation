@@ -1,5 +1,6 @@
 name: Build Grade-calculation
 run-name: Grade-calculation ${{ inputs.Version }}
+permissions: write
 on:
   workflow_dispatch:
     inputs:
