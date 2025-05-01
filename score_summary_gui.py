@@ -242,7 +242,7 @@ class GradeCalculatorApp(tk.Tk):
                 # 创建Excel工作簿
                 wb = Workbook()
                 ws = wb.active
-                ws.title = "成绩统计表转置"
+                ws.title = "成绩统计表"
                 
                 # 转置数据
                 transposed_df = self.result_df.set_index("学科").transpose()
@@ -254,7 +254,13 @@ class GradeCalculatorApp(tk.Tk):
                 
                 # 写入转置数据
                 for _, row in transposed_df.iterrows():
-                    ws.append(row.tolist())
+                    data_row = []
+                    for item in row.tolist():
+                        if isinstance(item, float) and item <= 1.0:  # 判断是否为率
+                            data_row.append(f"{item*100:.1f}%")
+                        else:
+                            data_row.append(item)
+                    ws.append(data_row)
                 
                 # 保存文件
                 wb.save(file_path)
