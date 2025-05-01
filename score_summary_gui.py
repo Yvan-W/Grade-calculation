@@ -55,8 +55,8 @@ class GradeCalculatorApp(tk.Tk):
     def calculate_grades(self, file_path):
         # 读取Excel文件
         try:
-            # 跳过前两行
-            df = pd.read_excel(file_path, engine='openpyxl', skiprows=2)
+            # 跳过前四行
+            df = pd.read_excel(file_path, engine='openpyxl', skiprows=4)
         except Exception as e:
             messagebox.showerror("错误", f"读取Excel文件失败: {str(e)}")
             return
@@ -256,8 +256,14 @@ class GradeCalculatorApp(tk.Tk):
                 for _, row in transposed_df.iterrows():
                     data_row = []
                     for item in row.tolist():
-                        if isinstance(item, float) and item <= 1.0:  # 判断是否为率
-                            data_row.append(f"{item*100:.1f}%")
+                        if isinstance(item, float):
+                            column_name = row.name
+                            if column_name == "优秀人数" or column_name == "参加考试人数" or column_name == "最高分" or column_name == "最低分" or column_name == "班级总分" or column_name == "合格人数" or column_name == "良好人数":
+                                data_row.append(f"{item:.0f}")
+                            elif item <= 1.0:  # 判断是否为率
+                                data_row.append(f"{item * 100:.1f}%")
+                            else:
+                                data_row.append(f"{item:.2f}")
                         else:
                             data_row.append(item)
                     ws.append(data_row)
