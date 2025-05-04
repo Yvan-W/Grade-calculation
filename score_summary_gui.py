@@ -57,7 +57,7 @@ class GradeCalculatorApp(tk.Tk):
         # 读取Excel文件
         try:
             # 跳过前两行
-            df = pd.read_excel(file_path, engine='openpyxl', skiprows=4)
+            df = pd.read_excel(file_path, engine='openpyxl', skiprows=2)
         except Exception as e:
             messagebox.showerror("错误", f"读取Excel文件失败: {str(e)}")
             return
@@ -169,4 +169,108 @@ class GradeCalculatorApp(tk.Tk):
                 row["良好率"],
                 row["综合率"]
             )
-            self.result
+            self.result_text.insert(tk.END, row_str)
+    
+    def set_subject_params(self):
+        # 创建新窗口用于设置科目参数
+        param_window = tk.Toplevel(self)
+        param_window.title("设置科目参数")
+        param_window.geometry("800x600")
+        
+        frame = ttk.Frame(param_window)
+        frame.pack(pady=20)
+        
+        # 表头
+        headers = ["科目", "满分", "合格", "优秀", "良好"]
+        for i, header in enumerate(headers):
+            label = ttk.Label(frame, text=header, font=("Arial", 12, "bold"))
+            label.grid(row=0, column=i, padx=10, pady=5)
+        
+        # 输入框
+        entries = {}
+        subjects = ["语文", "数学", "英语", "地理", "道法", "历史", "生物", "物理", "化学"]
+        
+        for i, subject in enumerate(subjects, start=1):
+            # 科目名称
+            subject_label = ttk.Label(frame, text=subject)
+            subject_label.grid(row=i, column=0, padx=10, pady=5)
+            
+            # 满分
+            total_entry = ttk.Entry(frame)
+            total_entry.insert(0, str(self.subject_params[subject]["满分"]))
+            total_entry.grid(row=i, column=1, padx=10, pady=5)
+            entries[(subject, "满分")] = total_entry
+            
+            # 合格
+            pass_entry = ttk.Entry(frame)
+            pass_entry.insert(0, str(self.subject_params[subject]["合格"]))
+            pass_entry.grid(row=i, column=2, padx=10, pady=5)
+            entries[(subject, "合格")] = pass_entry
+            
+            # 优秀
+            excellent_entry = ttk.Entry(frame)
+            excellent_entry.insert(0, str(self.subject_params[subject]["优秀"]))
+            excellent_entry.grid(row=i, column=3, padx=10, pady=5)
+            entries[(subject, "优秀")] = excellent_entry
+            
+            # 良好
+            good_entry = ttk.Entry(frame)
+            good_entry.insert(0, str(self.subject_params[subject]["良好"]))
+            good_entry.grid(row=i, column=4, padx=10, pady=5)
+            entries[(subject, "良好")] = good_entry
+        
+        # 保存按钮
+        def save_params():
+            for subject in subjects:
+                self.subject_params[subject]["满分"] = int(entries[(subject, "满分")].get())
+                self.subject_params[subject]["合格"] = int(entries[(subject, "合格")].get())
+                self.subject_params[subject]["优秀"] = int(entries[(subject, "优秀")].get())
+                self.subject_params[subject]["良好"] = int(entries[(subject, "良好")].get())
+            messagebox.showinfo("提示", "科目参数已保存")
+            param_window.destroy()
+        
+        save_button = ttk.Button(param_window, text="保存", command=save_params)
+        save_button.pack(pady=20)
+    
+    def export_results(self):
+        if self.result_df is None:
+            messagebox.showwarning("警告", "没有计算结果可导出")
+            return
+        
+        file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
+        if file_path:
+            try:
+                # 创建Excel工作簿
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "成绩统计表转置"
+                
+                # 转置数据
+                transposed_df = self.result_df.set_index("学科").transpose()
+                transposed_df.reset_index(inplace=True)
+                transposed_df.rename(columns={"index": "分值/学科"}, inplace=True)
+                
+                # 写入转置表头
+                ws.append(transposed_df.columns.tolist())
+                
+                # 写入转置数据
+                for _, row in transposed_df.iterrows():
+                    data_row = []
+                    for item in row.tolist():
+                        if isinstance(item, float) and item <= 1.0:  # 判断是否为率
+                            data_row.append(f"{item * 100:.1f}%")
+                        elif "平均分" in transposed_df.columns and row.name == transposed_df.columns.get_loc("平均分"):
+                            data_row.append(f"{item:.2f}")
+                        else:
+                            data_row.append(f"{item:.0f}")
+                    ws.append(data_row)
+                
+                # 保存文件
+                wb.save(file_path)
+                messagebox.showinfo("提示", f"结果已导出到 {file_path}")
+            except Exception as e:
+                messagebox.showerror("错误", f"导出文件时发生错误: {str(e)}")
+
+if __name__ == "__main__":
+    app = GradeCalculatorApp()
+    app.mainloop()
