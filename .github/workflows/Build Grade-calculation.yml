@@ -30,8 +30,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Grade-calculation_${{ inputs.deploy_target }}
-          release_name: Grade-calculation_${{ inputs.deploy_target }}
+          tag_name: Grade-calculation_${{ github.event.head_commit.message }}
+          release_name: Grade-calculation_${{ github.event.head_commit.message }}
           draft: false
           prerelease: false
 
@@ -43,5 +43,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ github.workspace }}/dist/score_summary_gui.exe
-          asset_name: score_summary_gui-${{ inputs.Version }}.exe
+          asset_name: score_summary_gui-${{ github.event.head_commit.message }}.exe
           asset_content_type: application/exe
