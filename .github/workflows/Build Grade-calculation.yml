@@ -1,5 +1,5 @@
 name: Build Grade-calculation
-run-name: Grade-calculation ${{ inputs.deploy_target }} by @${{ github.actor }}
+run-name: Grade-calculation ${{ github.event.head_commit.message }} by @${{ github.actor }}
 on:
   push:
     branches: [main]
