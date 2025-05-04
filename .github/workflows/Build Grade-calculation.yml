@@ -1,13 +1,8 @@
 name: Build Grade-calculation
-run-name: Grade-calculation ${{ inputs.Version }}
+run-name: Grade-calculation ${{ inputs.deploy_target }} by @${{ github.actor }}
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      Version:
-        description: '构建版本'
-        required: true
 
 jobs:
   build:
@@ -35,8 +30,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Grade-calculation_${{ inputs.Version }}
-          release_name: Grade-calculation_${{ inputs.Version }}
+          tag_name: Grade-calculation_${{ inputs.deploy_target }}
+          release_name: Grade-calculation_${{ inputs.deploy_target }}
           draft: false
           prerelease: false
 
