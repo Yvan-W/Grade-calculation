@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, NumberFormat
+from openpyxl.styles import Alignment, Font
 
 class GradeCalculatorApp(tk.Tk):
     def __init__(self):
@@ -161,12 +161,12 @@ class GradeCalculatorApp(tk.Tk):
                 row["最低分"],
                 row["平均分"],
                 int(row["合格人数"]),
-                row["合格率"],
+                f"{row['合格率']:.1%}",
                 int(row["优秀人数"]),
-                row["优秀率"],
+                f"{row['优秀率']:.1%}",
                 row["平均得分率"],
                 int(row["良好人数"]),
-                row["良好率"],
+                f"{row['良好率']:.1%}",
                 row["综合率"]
             )
             self.result_text.insert(tk.END, row_str)
@@ -243,7 +243,7 @@ class GradeCalculatorApp(tk.Tk):
                 # 创建Excel工作簿
                 wb = Workbook()
                 ws = wb.active
-                ws.title = "成绩统计表转置"
+                ws.title = "成绩统计表"
                 
                 # 转置数据
                 transposed_df = self.result_df.set_index("学科").transpose()
@@ -259,10 +259,10 @@ class GradeCalculatorApp(tk.Tk):
                     for item in row.tolist():
                         if isinstance(item, float) and item <= 1.0:  # 判断是否为率
                             data_row.append(f"{item * 100:.1f}%")
-                        elif "平均分" in transposed_df.columns and row.name == transposed_df.columns.get_loc("平均分"):
+                        elif isinstance(item, float):  # 判断是否为平均分
                             data_row.append(f"{item:.2f}")
                         else:
-                            data_row.append(f"{item:.0f}")
+                            data_row.append(item)
                     ws.append(data_row)
                 
                 # 保存文件
