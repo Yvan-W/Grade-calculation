@@ -242,7 +242,7 @@ class GradeCalculatorApp(tk.Tk):
                 # 创建Excel工作簿
                 wb = Workbook()
                 ws = wb.active
-                ws.title = "成绩统计表"
+                ws.title = "成绩统计表转置"
                 
                 # 转置数据
                 transposed_df = self.result_df.set_index("学科").transpose()
