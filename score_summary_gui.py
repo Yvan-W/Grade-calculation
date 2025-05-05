@@ -56,7 +56,7 @@ class GradeCalculatorApp(tk.Tk):
         # 读取Excel文件
         try:
             # 跳过前两行
-            df = pd.read_excel(file_path, engine='openpyxl', skiprows=2)
+            df = pd.read_excel(file_path, engine='openpyxl', skiprows=4)
         except Exception as e:
             messagebox.showerror("错误", f"读取Excel文件失败: {str(e)}")
             return
@@ -152,7 +152,7 @@ class GradeCalculatorApp(tk.Tk):
         
         # 格式化表格内容
         for _, row in self.result_df.iterrows():
-            row_str = "{:<10} {:<12.0f} {:<12} {:<8.2f} {:<8.0f} {:<8.2f} {:<10} {:<8} {:<10} {:<8} {:<12} {:<10} {:<8} {:<10}\n".format(
+            row_str = "{:<10} {:<12.0f} {:<12} {:<8.0f} {:<8.0f} {:<8.2f} {:<10} {:<8.1%} {:<10} {:<8.1%} {:<12.2%} {:<10} {:<8.1%} {:<10.2%}\n".format(
                 row["学科"],
                 row["班级总分"],
                 int(row["参加考试人数"]),
@@ -160,13 +160,13 @@ class GradeCalculatorApp(tk.Tk):
                 row["最低分"],
                 row["平均分"],
                 int(row["合格人数"]),
-                f"{row['合格率']:.1%}",
+                row["合格率"],
                 int(row["优秀人数"]),
-                f"{row['优秀率']:.1%}",
-                f"{row['平均得分率']:.2%}",
+                row["优秀率"],
+                row["平均得分率"],
                 int(row["良好人数"]),
-                f"{row['良好率']:.1%}",
-                f"{row['综合率']:.2%}"
+                row["良好率"],
+                row["综合率"]
             )
             self.result_text.insert(tk.END, row_str)
     
@@ -242,7 +242,7 @@ class GradeCalculatorApp(tk.Tk):
                 # 创建Excel工作簿
                 wb = Workbook()
                 ws = wb.active
-                ws.title = "成绩统计表转置"
+                ws.title = "成绩统计表"
                 
                 # 转置数据
                 transposed_df = self.result_df.set_index("学科").transpose()
@@ -258,8 +258,8 @@ class GradeCalculatorApp(tk.Tk):
                     for item in row.tolist():
                         if isinstance(item, float) and item <= 1.0:  # 判断是否为率
                             data_row.append(f"{item * 100:.1f}%")
-                        elif isinstance(item, float):  # 判断是否为平均分
-                            data_row.append(f"{item:.2f}")
+                        elif pd.isna(item):  # 判断是否为NaN
+                            data_row.append("")
                         else:
                             data_row.append(item)
                     ws.append(data_row)
