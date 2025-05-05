@@ -258,8 +258,10 @@ class GradeCalculatorApp(tk.Tk):
                     for item in row.tolist():
                         if isinstance(item, float) and item <= 1.0:  # 判断是否为率
                             data_row.append(f"{item * 100:.1f}%")
-                        elif pd.isna(item):  # 判断是否为NaN
-                            data_row.append("")
+                        elif isinstance(item, float) and item == row["平均分"]:  # 判断是否为平均分
+                            data_row.append(f"{item:.2f}")
+                        elif isinstance(item, float) and item in [row["班级总分"], row["参加考试人数"], row["最高分"], row["最低分"], row["优秀人数"], row["良好人数"]]:
+                            data_row.append(f"{item:.0f}")
                         else:
                             data_row.append(item)
                     ws.append(data_row)
