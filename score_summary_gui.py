@@ -255,13 +255,13 @@ class GradeCalculatorApp(tk.Tk):
                 # 写入转置数据
                 for _, row in transposed_df.iterrows():
                     data_row = []
-                    for item in row.tolist():
-                        if isinstance(item, float) and item <= 1.0:  # 判断是否为率
-                            data_row.append(f"{item * 100:.1f}%")
-                        elif isinstance(item, float) and item == row["平均分"]:  # 判断是否为平均分
+                    for col_name, item in zip(transposed_df.columns, row.tolist()):
+                        if col_name == "平均分":
                             data_row.append(f"{item:.2f}")
-                        elif isinstance(item, float) and item in [row["班级总分"], row["参加考试人数"], row["最高分"], row["最低分"], row["优秀人数"], row["良好人数"]]:
+                        elif col_name in ["班级总分", "参加考试人数", "最高分", "最低分", "合格人数", "优秀人数", "良好人数"]:
                             data_row.append(f"{item:.0f}")
+                        elif col_name in ["合格率", "优秀率", "平均得分率", "良好率", "综合率"]:
+                            data_row.append(f"{item * 100:.1f}%")
                         else:
                             data_row.append(item)
                     ws.append(data_row)
