@@ -56,7 +56,7 @@ class GradeCalculatorApp(tk.Tk):
         # 读取Excel文件
         try:
             # 跳过前两行
-            df = pd.read_excel(file_path, engine='openpyxl', skiprows=4)
+            df = pd.read_excel(file_path, engine='openpyxl', skiprows=2)
         except Exception as e:
             messagebox.showerror("错误", f"读取Excel文件失败: {str(e)}")
             return
